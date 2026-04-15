@@ -18,4 +18,6 @@ class RetrofitFactory {
         return retrofitFactory.create(PokemonService::class.java)
     }
 
+
+
 }

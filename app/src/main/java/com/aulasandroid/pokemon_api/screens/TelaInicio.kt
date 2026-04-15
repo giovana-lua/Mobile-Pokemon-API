@@ -47,8 +47,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.aulasandroid.pokemon_api.R
 import com.aulasandroid.pokemon_api.model.Pokemon
+import com.aulasandroid.pokemon_api.model.PokemonResponse
+import com.aulasandroid.pokemon_api.model.getPokemonIdFromUrl
 import com.aulasandroid.pokemon_api.services.RetrofitFactory
 import kotlinx.coroutines.launch
 import kotlin.collections.listOf
@@ -168,6 +171,9 @@ fun pokemonScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun cardPokemon(pokemon: Pokemon) {
+    val pokemonId = getPokemonIdFromUrl(pokemon.url)
+    val imgUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/$pokemonId.png"
+
     Card( modifier = Modifier
         .offset(y = 40.dp)
         .padding(5.dp)
@@ -179,33 +185,39 @@ fun cardPokemon(pokemon: Pokemon) {
         border = BorderStroke(1.dp, Color.Blue)
     )
     {
-//        Row(modifier = Modifier.fillMaxWidth(),
-//            verticalAlignment = Alignment.CenterVertically,
-//            horizontalArrangement = Arrangement.SpaceBetween
-//            ) {
+        Row(modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+            ) {
         Column(
             modifier = Modifier
                 .fillMaxSize(),
-               verticalArrangement = Arrangement.spacedBy(16.dp)
+               verticalArrangement = Arrangement.Center
 
         ) {
-            Row(modifier = Modifier
-                .fillMaxWidth(),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End
             ) {
-                Text(text = "#001",
+                Text(
+                    text = "# ${pokemon.count}",
                     fontSize = 12.sp,
 
                     )
-
             }
 
+            AsyncImage(
+                model= imgUrl,
+                contentDescription = "Imagem ${pokemon.name}",
+                modifier = Modifier.size(80.dp)
+            )
 
-
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Blue),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Blue),
                 //verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -213,9 +225,9 @@ fun cardPokemon(pokemon: Pokemon) {
                     text = " ${pokemon.name}",
                     fontSize = 16.sp,
                     color = Color.White
-                    )
+                )
             }
-
+        }
 
         }
 
