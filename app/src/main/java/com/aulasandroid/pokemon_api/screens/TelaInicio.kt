@@ -1,6 +1,7 @@
 package com.aulasandroid.pokemon_api.screens
 
-import android.R.attr.top
+import android.util.Log
+import android.util.Log.e
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -26,15 +28,18 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -43,11 +48,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aulasandroid.pokemon_api.R
+import com.aulasandroid.pokemon_api.model.Pokemon
+import com.aulasandroid.pokemon_api.services.RetrofitFactory
+import kotlinx.coroutines.launch
+import kotlin.collections.listOf
 
 @Composable
 fun pokemonScreen(modifier: Modifier = Modifier) {
 
     val corFundo = Color(231,229,232)
+
+    var nameState by remember { mutableStateOf("") }
+    var urlState by remember { mutableStateOf("") }
+    var resultState by remember { mutableStateOf(listOf<Pokemon>()) }
+
+    var listaPokemon by remember {
+        mutableStateOf(listOf<Pokemon>())
+    }
+
+
+    var scope = rememberCoroutineScope()
 
     Column( modifier = Modifier
         .fillMaxSize()
@@ -87,11 +107,10 @@ fun pokemonScreen(modifier: Modifier = Modifier) {
 
         ) {
             OutlinedTextField( modifier = Modifier
-                .width(380.dp)
-                .height(20.dp),
-                value = "",
+                .width(380.dp),
+                value = nameState,
                 onValueChange = {
-
+                    nameState = it
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                 placeholder = {Text(text = "Nome ou ID", fontSize = 8.sp, color = Color.Black)
@@ -104,7 +123,24 @@ fun pokemonScreen(modifier: Modifier = Modifier) {
                 ),
                 trailingIcon = {
                     IconButton (
-                        onClick = {}
+                        onClick = {
+                            scope.launch {
+                                try {
+                                   val service = RetrofitFactory().getPokemonService()
+                                    // se o nome estiver vazio ele lista os pokemons
+                                    if (nameState.isEmpty()){
+                                        val response = service.getPokemons(limit = 20)
+                                        listaPokemon = response.results
+                                        //se não estiver ele retorna o pokemon
+                                    } else {
+                                        val pokemon = service.getPokemonById(nameState.lowercase())
+                                        listaPokemon = listOf(pokemon)
+                                    }
+                                }catch (e: Exception){
+                                    Log.e("Error", e.message ?: "")
+                                }
+                            }
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -119,9 +155,11 @@ fun pokemonScreen(modifier: Modifier = Modifier) {
             )
         }// fecha linha do campo de pesquisa
 
-        LazyVerticalGrid ( columns = GridCells.FixedSize(135.dp)
+        LazyColumn ( modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            items(15) { cardPokemon() }
+            items(listaPokemon) { pokemon ->
+                cardPokemon(pokemon)
+            }
 
         }
 
@@ -129,7 +167,7 @@ fun pokemonScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun cardPokemon(modifier: Modifier = Modifier) {
+fun cardPokemon(pokemon: Pokemon) {
     Card( modifier = Modifier
         .offset(y = 40.dp)
         .padding(5.dp)
@@ -141,10 +179,10 @@ fun cardPokemon(modifier: Modifier = Modifier) {
         border = BorderStroke(1.dp, Color.Blue)
     )
     {
-        Row(modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+//        Row(modifier = Modifier.fillMaxWidth(),
+//            verticalAlignment = Alignment.CenterVertically,
+//            horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
         Column(
             modifier = Modifier
                 .fillMaxSize(),
@@ -162,7 +200,8 @@ fun cardPokemon(modifier: Modifier = Modifier) {
                     )
 
             }
-            Spacer(modifier = Modifier.height(40.dp))
+
+
 
             Row(modifier = Modifier
                 .fillMaxWidth()
@@ -171,7 +210,7 @@ fun cardPokemon(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "nome",
+                    text = " ${pokemon.name}",
                     fontSize = 16.sp,
                     color = Color.White
                     )
@@ -179,7 +218,7 @@ fun cardPokemon(modifier: Modifier = Modifier) {
 
 
         }
-      }
+
     }
 
 }
